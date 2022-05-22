@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/fragmentChatList">
+
+    <fragment
+        android:id="@+id/fragmentChatList"
+        android:name="com.yatsenko.testhelper.ui.chat.ChatListFragment"
+        android:label="Chat List"
+        tools:layout="@layout/fragment_chat_list">
+        <action
+            android:id="@+id/toFragmentMessenger"
+            app:destination="@id/fragmentMessenger"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragmentMessenger"
+        android:name="com.yatsenko.testhelper.ui.chat.MessengerFragment"
+        android:label="Messenger"
+        tools:layout="@layout/fragment_messenger">
+        <argument
+            android:name="chatId"
+            app:argType="string" />
+    </fragment>
+</navigation>
