@@ -15,7 +15,7 @@ class AuthViewModel : BaseViewModel() {
 
     fun connectAuthSocket() {
         viewModelScope.launch(Dispatchers.IO) {
-            coreSdk.connectToAuthSocket()
+            coreSdk.connectToAuthSocket(appSettings.getAuthToken())
         }
     }
 

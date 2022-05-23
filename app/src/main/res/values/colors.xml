@@ -9,5 +9,6 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="primaryTextColor">#292929</color>
+    <color name="secondaryTextColor">#CACACA</color>
     <color name="bgLineColor">#EAEAEA</color>
 </resources>

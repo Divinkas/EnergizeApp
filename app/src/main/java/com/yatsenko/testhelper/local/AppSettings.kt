@@ -33,7 +33,7 @@ class AppSettings(context: Context) {
     fun saveCreatedChat(chatId: String) {
         val savedChatList = preferences.getStringSet( KEY_USER_CHATS, setOf())?.toMutableSet() ?: mutableSetOf()
         savedChatList.add(chatId)
-        preferences.getStringSet(KEY_USER_CHATS, savedChatList)
+        preferences.putStringSet(KEY_USER_CHATS, savedChatList)
     }
 
     fun getSavedChatList(): List<String> {

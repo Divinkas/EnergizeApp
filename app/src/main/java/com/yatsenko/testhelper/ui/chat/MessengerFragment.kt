@@ -3,10 +3,13 @@ package com.yatsenko.testhelper.ui.chat
 import android.os.Bundle
 import android.view.View
 import androidx.navigation.fragment.navArgs
+import com.yatsenko.core.utils.log
 import com.yatsenko.testhelper.R
 import com.yatsenko.testhelper.base.BaseFragment
+import com.yatsenko.testhelper.ui.auth.model.AuthState
 import com.yatsenko.testhelper.ui.chat.adapter.MessagesAdapter
 import com.yatsenko.testhelper.utils.getVerticalLinearLayoutManager
+import com.yatsenko.testhelper.utils.openLoginScreen
 import kotlinx.android.synthetic.main.fragment_messenger.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -26,8 +29,6 @@ class MessengerFragment : BaseFragment() {
         initView()
         setupListeners()
         observeData()
-
-        viewModel.connectToChatSocket()
     }
 
     override fun onResume() {
@@ -60,6 +61,15 @@ class MessengerFragment : BaseFragment() {
     private fun observeData() {
         viewModel.chatMessagesLiveData.observe(viewLifecycleOwner) { messages ->
             messagesAdapter?.addMessages(messages)
+        }
+
+        viewModel.authLiveData.observe(viewLifecycleOwner) { authState ->
+            viewModel.authLiveData.observe(viewLifecycleOwner) { authState ->
+                when (authState) {
+                    is AuthState.AuthSuccess -> log("[AuthSuccess]")
+                    is AuthState.AuthError -> activity?.openLoginScreen()
+                }
+            }
         }
     }
 

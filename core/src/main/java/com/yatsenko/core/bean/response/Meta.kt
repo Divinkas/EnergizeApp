@@ -7,4 +7,9 @@ import kotlinx.parcelize.Parcelize
 data class Meta(
     val status: String?,
     val message: String?
-) : Parcelable
+) : Parcelable {
+
+    fun isAuthorizeError(): Boolean {
+        return message == "Unauthorized"
+    }
+}

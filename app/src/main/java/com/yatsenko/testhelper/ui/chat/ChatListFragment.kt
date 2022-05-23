@@ -2,12 +2,15 @@ package com.yatsenko.testhelper.ui.chat
 
 import android.os.Bundle
 import android.view.View
+import com.yatsenko.core.utils.log
 import com.yatsenko.testhelper.R
 import com.yatsenko.testhelper.base.BaseFragment
+import com.yatsenko.testhelper.ui.auth.model.AuthState
 import com.yatsenko.testhelper.ui.chat.adapter.UserChatsAdapter
 import com.yatsenko.testhelper.utils.getVerticalLinearLayoutManager
 import com.yatsenko.testhelper.utils.gone
-import com.yatsenko.testhelper.utils.visible
+import com.yatsenko.testhelper.utils.openLoginScreen
+import com.yatsenko.testhelper.utils.visibility
 import kotlinx.android.synthetic.main.fragment_chat_list.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -27,11 +30,11 @@ class ChatListFragment : BaseFragment() {
         observeData()
 
         viewModel.connectAuthSocket()
-        viewModel.connectToChatSocket()
     }
 
     override fun onResume() {
         super.onResume()
+        viewModel.observeAuthState(viewLifecycleOwner)
         viewModel.observeChatCreateResponse(viewLifecycleOwner)
         viewModel.observeJoinChatResponse(viewLifecycleOwner)
 
@@ -56,18 +59,18 @@ class ChatListFragment : BaseFragment() {
 
     private fun observeData() {
         viewModel.userChatsLiveData.observe(viewLifecycleOwner) { chats ->
-            if (chats.isEmpty()) {
-                showEmptyChatsView()
-            } else {
-                userChatAdapter?.updateItems(chats)
-                rvUserChats?.visible()
-            }
+            userChatAdapter?.updateItems(chats)
+            rvUserChats?.visibility(chats.isNotEmpty())
+            tvEmptyChatsLabel?.visibility(chats.isEmpty())
             progress?.gone()
         }
-    }
 
-    private fun showEmptyChatsView() {
-        rvUserChats?.gone()
+        viewModel.authLiveData.observe(viewLifecycleOwner) { authState ->
+            when (authState) {
+                is AuthState.AuthSuccess -> log("[AuthSuccess]")
+                is AuthState.AuthError -> activity?.openLoginScreen()
+            }
+        }
     }
 
     private fun openChat(chatId: String) {

@@ -17,8 +17,8 @@ class CoreApi : KoinComponent {
         coreSDK.createUser(login, mail, password)
     }
 
-    fun connectToAuthSocket() {
-        coreSDK.connectToAuthSocket()
+    fun connectToAuthSocket(token: String) {
+        coreSDK.connectToAuthSocket(token)
     }
 
     fun closeAuthSocketConnect() {
@@ -41,17 +41,17 @@ class CoreApi : KoinComponent {
         return coreSDK.getCreateUserLiveData()
     }
 
-    fun connectToChatSocket() {
-        coreSDK.connectToChatSocket()
+    fun loadMessagesByChatId(chatId: String) {
+        coreSDK.loadMessagesByChatId(chatId)
     }
-
-    fun loadMessagesByChatId(chatId: String) {}
 
     fun createChat(chatName: String) {
         coreSDK.createChat(chatName)
     }
 
-    fun sendMessage(message: String, chatId: String) {}
+    fun sendMessage(message: String, chatId: String) {
+        coreSDK.sendMessage(message, chatId)
+    }
 
     fun getCreateRoomLiveData(): LiveData<EnergizeResponse<CreateRoomResponse>> {
         return coreSDK.getCreateRoomLiveData()

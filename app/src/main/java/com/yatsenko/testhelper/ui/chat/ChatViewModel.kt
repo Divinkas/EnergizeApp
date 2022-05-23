@@ -8,6 +8,7 @@ import com.yatsenko.core.bean.Message
 import com.yatsenko.core.bean.response.EnergizeResponse
 import com.yatsenko.core.utils.log
 import com.yatsenko.testhelper.base.BaseViewModel
+import com.yatsenko.testhelper.ui.auth.model.AuthState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -20,6 +21,27 @@ class ChatViewModel : BaseViewModel() {
     private val _chatMessagesLiveData = MutableLiveData<List<Message>>()
     val chatMessagesLiveData: LiveData<List<Message>>
         get() = _chatMessagesLiveData
+
+    var authLiveData = MutableLiveData<AuthState>()
+
+    fun observeAuthState(owner: LifecycleOwner) {
+        coreSdk.getLoginByCredentialLiveData().observe(owner) { response ->
+            when (response) {
+                is EnergizeResponse.Success -> {
+                    if (response.data.token != null) {
+                        saveToken(response.data.token)
+                    }
+                    if (response.data.user != null) {
+                        saveUser(response.data.user)
+                    }
+                    authLiveData.postValue(AuthState.AuthSuccess)
+                }
+                is EnergizeResponse.Error -> {
+                    authLiveData.postValue(AuthState.AuthError(response.meta.message))
+                }
+            }
+        }
+    }
 
     fun observeGetChatMessagesResponse(viewLifecycleOwner: LifecycleOwner) {
         viewModelScope.launch(Dispatchers.Main) {
@@ -112,15 +134,9 @@ class ChatViewModel : BaseViewModel() {
         }
     }
 
-    fun connectToChatSocket() {
-        viewModelScope.launch(Dispatchers.IO) {
-            coreSdk.connectToChatSocket()
-        }
-    }
-
     fun connectAuthSocket() {
         viewModelScope.launch(Dispatchers.IO) {
-            coreSdk.connectToAuthSocket()
+            coreSdk.connectToAuthSocket(appSettings.getAuthToken())
         }
     }
 }
