@@ -55,6 +55,13 @@ class ChatListFragment : BaseFragment() {
         btnCreateNewChat?.setOnClickListener {
             viewModel.createChat()
         }
+
+        btnJoinToChat?.setOnClickListener {
+            if (getEnteredChatId().isNotEmpty()) {
+                viewModel.joinToChat(getEnteredChatId())
+                clearEnteredChatId()
+            }
+        }
     }
 
     private fun observeData() {
@@ -75,5 +82,11 @@ class ChatListFragment : BaseFragment() {
 
     private fun openChat(chatId: String) {
         navigateTo(ChatListFragmentDirections.toFragmentMessenger(chatId))
+    }
+
+    private fun getEnteredChatId(): String = etChatId?.text.toString()
+
+    private fun clearEnteredChatId() {
+        etChatId?.setText("")
     }
 }

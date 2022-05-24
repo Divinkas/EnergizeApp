@@ -6,7 +6,7 @@ import java.util.*
 
 object DateUtils {
 
-    private const val DEFAULT_DATE_FORMAT = "dd-MM-yyyy/HH:mm:ss"
+    private const val DEFAULT_DATE_FORMAT = "HH:mm:ss"
 
     @SuppressLint("SimpleDateFormat")
     fun getFormattedDate(time: Long): String {

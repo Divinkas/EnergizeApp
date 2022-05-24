@@ -63,10 +63,6 @@ class AuthViewModel : BaseViewModel() {
         return appSettings.getAuthToken().isNotEmpty()
     }
 
-    fun closeSocketConnect() {
-        coreSdk.closeAuthSocketConnect()
-    }
-
     fun registerUser(login: String, mail: String, password: String) {
         viewModelScope.launch(Dispatchers.IO) {
             coreSdk.registerUser(login, mail, password)

@@ -15,4 +15,6 @@
     <string name="chat_list">Chats</string>
     <string name="message">Message...</string>
     <string name="btn_send">Send</string>
+    <string name="btn_join_to_chat">Join</string>
+    <string name="chat_id">chatId</string>
 </resources>

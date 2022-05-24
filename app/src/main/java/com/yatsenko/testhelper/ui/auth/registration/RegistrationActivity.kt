@@ -48,7 +48,6 @@ class RegistrationActivity : BaseActivity() {
         }
 
         tvToLogin?.setOnClickListener {
-            viewModel.closeSocketConnect()
             openLoginScreen()
         }
     }
@@ -59,7 +58,6 @@ class RegistrationActivity : BaseActivity() {
         viewModel.authLiveData.observe(this) { state ->
             when (state) {
                 is AuthState.AuthSuccess -> {
-                    viewModel.closeSocketConnect()
                     openLoginScreen()
                 }
                 is AuthState.AuthError -> {

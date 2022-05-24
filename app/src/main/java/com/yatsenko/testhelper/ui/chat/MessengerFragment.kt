@@ -64,11 +64,9 @@ class MessengerFragment : BaseFragment() {
         }
 
         viewModel.authLiveData.observe(viewLifecycleOwner) { authState ->
-            viewModel.authLiveData.observe(viewLifecycleOwner) { authState ->
-                when (authState) {
-                    is AuthState.AuthSuccess -> log("[AuthSuccess]")
-                    is AuthState.AuthError -> activity?.openLoginScreen()
-                }
+            when (authState) {
+                is AuthState.AuthSuccess -> log("[AuthSuccess]")
+                is AuthState.AuthError -> activity?.openLoginScreen()
             }
         }
     }

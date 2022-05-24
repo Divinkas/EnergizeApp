@@ -18,6 +18,10 @@ class SocketComponent : KoinComponent {
 
     private var webSocket: WebSocket? = null
 
+    private val client = OkHttpClient().newBuilder().build()
+
+    private val request: Request = Request.Builder().url(SERVER_API).build()
+
     var authLiveData = SingleLiveEvent<EnergizeResponse<LoginTokenResponse>>()
 
     var createChatLiveData = SingleLiveEvent<EnergizeResponse<CreateRoomResponse>>()
@@ -32,29 +36,59 @@ class SocketComponent : KoinComponent {
 
     private var isFirstRequest = true
 
-    fun connectToSocket(token: String) {
-        try {
-            val client = OkHttpClient().newBuilder().build()
-            val request: Request = Request.Builder().url(SERVER_API).build()
+    private var isConnected = false
 
-            webSocket = client.newWebSocket(request, object : WebSocketListener() {
-                override fun onMessage(webSocket: WebSocket, text: String) {
-                    super.onMessage(webSocket, text)
-                    parseResponse(text)
+    private var token: String = ""
+
+    fun connectToSocket(token: String, listener: WebSocketListener = getWebSocketListener()) {
+        if (!isConnected) {
+            try {
+                this.token = token
+
+                webSocket = client.newWebSocket(request, listener)
+
+                if (token.isNotEmpty()) {
+                    loginByToken(token)
                 }
-
-                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    super.onFailure(webSocket, t, response)
-                    t.printStackTrace()
-                }
-            })
-
-            if (isFirstRequest && token.isNotEmpty()) {
-                isFirstRequest = false
-                loginByToken(token)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
             }
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+        }
+    }
+
+    private fun getWebSocketListener(onConnectedAction: () -> Unit = {}): WebSocketListener {
+        return object : WebSocketListener() {
+
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                super.onOpen(webSocket, response)
+                isConnected = true
+                onConnectedAction.invoke()
+                log("[webSocket] isConnected = true")
+            }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                super.onMessage(webSocket, text)
+                parseResponse(text)
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                super.onFailure(webSocket, t, response)
+                t.printStackTrace()
+                log("[webSocket] isConnected = false ${response?.message}")
+                isConnected = false
+            }
+
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                super.onClosing(webSocket, code, reason)
+                log("[webSocket] isConnected = false $reason")
+                isConnected = false
+            }
+
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                super.onClosed(webSocket, code, reason)
+                log("[webSocket] onClosed / isConnected = false $reason")
+                isConnected = false
+            }
         }
     }
 
@@ -138,29 +172,43 @@ class SocketComponent : KoinComponent {
         }
     }
 
+    private fun sendEvent(action: () -> Unit = {}) {
+        if (!isConnected && token.isNotEmpty()) {
+            connectToSocket(token, getWebSocketListener {
+                action.invoke()
+            })
+        } else {
+            action.invoke()
+        }
+    }
+
     fun closeAuthSocket() {
         webSocket?.close(1001, "Android: User exited.")
     }
 
     fun createUser(login: String, mail: String, password: String) {
-        try {
-            webSocket?.send(JSONObject().apply {
-                put("event", AUTH_REGISTRATION_REQUEST)
-                put("data", CreateUserRequest(login, mail, password, password).toJSONObject())
-            }.toString())
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+        sendEvent {
+            try {
+                webSocket?.send(JSONObject().apply {
+                    put("event", AUTH_REGISTRATION_REQUEST)
+                    put("data", CreateUserRequest(login, mail, password, password).toJSONObject())
+                }.toString())
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
     fun loginByCredentials(login: String, password: String) {
-        try {
-            webSocket?.send(JSONObject().apply {
-                put("event", AUTH_LOGIN_REQUEST)
-                put("data", LoginRequest(login, password).toJSONObject())
-            }.toString())
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+        sendEvent {
+            try {
+                webSocket?.send(JSONObject().apply {
+                    put("event", AUTH_LOGIN_REQUEST)
+                    put("data", LoginRequest(login, password).toJSONObject())
+                }.toString())
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
@@ -176,45 +224,53 @@ class SocketComponent : KoinComponent {
     }
 
     fun createChat() {
-        try {
-            webSocket?.send(JSONObject().apply {
-                put("event", CHAT_CREATE_REQUEST)
-            }.toString())
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+        sendEvent {
+            try {
+                webSocket?.send(JSONObject().apply {
+                    put("event", CHAT_CREATE_REQUEST)
+                }.toString())
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
     fun joinToChat(chatId: String) {
-        try {
-            webSocket?.send(JSONObject().apply {
-                put("event", CHAT_JOIN_REQUEST)
-                put("data", JoinRoomRequest(chatId).toJSONObject())
-            }.toString())
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+        sendEvent {
+            try {
+                webSocket?.send(JSONObject().apply {
+                    put("event", CHAT_JOIN_REQUEST)
+                    put("data", JoinRoomRequest(chatId).toJSONObject())
+                }.toString())
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
     fun loadMessagesByChatId(chatId: String) {
-        try {
-            webSocket?.send(JSONObject().apply {
-                put("event", CHAT_GET_MESSAGES_REQUEST)
-                put("data", ChatMessagesRequest(chatId).toJSONObject())
-            }.toString())
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+        sendEvent {
+            try {
+                webSocket?.send(JSONObject().apply {
+                    put("event", CHAT_GET_MESSAGES_REQUEST)
+                    put("data", ChatMessagesRequest(chatId).toJSONObject())
+                }.toString())
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 
     fun sendMessage(message: String, chatId: String) {
-        try {
-            webSocket?.send(JSONObject().apply {
-                put("event", CHAT_SEND_MESSAGE_REQUEST)
-                put("data", SendMessageRequest(message, chatId).toJSONObject())
-            }.toString())
-        } catch (ex: Exception) {
-            ex.printStackTrace()
+        sendEvent {
+            try {
+                webSocket?.send(JSONObject().apply {
+                    put("event", CHAT_SEND_MESSAGE_REQUEST)
+                    put("data", SendMessageRequest(message, chatId).toJSONObject())
+                }.toString())
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
     }
 }

@@ -23,7 +23,8 @@
         style="@style/MessageTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="@+id/tvOtherMessage"
+        android:layout_marginStart="16dp"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvOtherMessage"
         tools:text="12:22" />
 </androidx.constraintlayout.widget.ConstraintLayout>
