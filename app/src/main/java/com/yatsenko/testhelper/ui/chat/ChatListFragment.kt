@@ -62,6 +62,10 @@ class ChatListFragment : BaseFragment() {
                 clearEnteredChatId()
             }
         }
+
+        ivSettings?.setOnClickListener {
+            openSettings()
+        }
     }
 
     private fun observeData() {
@@ -78,6 +82,10 @@ class ChatListFragment : BaseFragment() {
                 is AuthState.AuthError -> activity?.openLoginScreen()
             }
         }
+    }
+
+    private fun openSettings() {
+        navigateTo(ChatListFragmentDirections.toFragmentSettings())
     }
 
     private fun openChat(chatId: String) {

@@ -25,8 +25,7 @@ open class BaseViewModel : ViewModel(), KoinComponent {
     }
 
     fun logOut() {
-        // appSettings.clear()
-        // redirect to login screen
+        appSettings.clear()
     }
 
     fun getCurrentUserId(): String {

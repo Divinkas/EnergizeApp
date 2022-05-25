@@ -6,6 +6,7 @@ import com.yatsenko.testhelper.EnergizerApplication
 import com.yatsenko.testhelper.local.AppSettings
 import com.yatsenko.testhelper.ui.auth.AuthViewModel
 import com.yatsenko.testhelper.ui.chat.ChatViewModel
+import com.yatsenko.testhelper.ui.settings.SettingsViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -24,6 +25,7 @@ class KoinInstaller {
     private val viewModelModule = module {
         viewModel { AuthViewModel() }
         viewModel { ChatViewModel() }
+        viewModel { SettingsViewModel() }
     }
 
     fun install(application: Application) {

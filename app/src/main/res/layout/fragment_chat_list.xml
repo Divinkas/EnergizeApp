@@ -16,6 +16,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.yatsenko.testhelper.utils.ClickableImageView
+        android:id="@+id/ivSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/chatsPageTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/chatsPageTitle"
+        app:srcCompat="@drawable/ic_settings_dark" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvUserChats"
         android:layout_width="0dp"
