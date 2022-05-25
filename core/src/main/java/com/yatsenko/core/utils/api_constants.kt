@@ -25,3 +25,4 @@ const val CHAT_GET_MESSAGES_RESPONSE = "get-chat-messages-response"
 
 const val CHAT_SEND_MESSAGE_REQUEST = "send-message-request"
 const val CHAT_SEND_MESSAGE_RESPONSE = "send-message-response"
+const val CHAT_SEND_MESSAGE_SELF_RESPONSE = "send-message-self-response"

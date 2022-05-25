@@ -2,6 +2,7 @@ package com.yatsenko.core
 
 import androidx.lifecycle.LiveData
 import com.yatsenko.core.bean.Message
+import com.yatsenko.core.bean.User
 import com.yatsenko.core.bean.response.CreateRoomResponse
 import com.yatsenko.core.bean.response.EnergizeResponse
 import com.yatsenko.core.bean.response.JoinRoomResponse
@@ -27,6 +28,10 @@ class CoreApi : KoinComponent {
 
     fun loginByCredentials(login: String, password: String) {
         coreSDK.loginByCredentials(login, password)
+    }
+
+    fun getChatUsers(chatId: String) {
+        coreSDK.getChatUsers(chatId)
     }
 
     fun loginByToken(token: String) {
@@ -63,6 +68,10 @@ class CoreApi : KoinComponent {
 
     fun getChatMessagesLiveData(): LiveData<EnergizeResponse<List<Message>>> {
         return coreSDK.getChatMessagesLiveData()
+    }
+
+    fun getChatUsersLiveData(): LiveData<EnergizeResponse<List<User>>> {
+        return coreSDK.getChatUsers()
     }
 
     fun getSendMessageLiveData(): LiveData<EnergizeResponse<Message>> {

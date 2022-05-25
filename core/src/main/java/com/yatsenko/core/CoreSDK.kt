@@ -2,6 +2,7 @@ package com.yatsenko.core
 
 import androidx.lifecycle.LiveData
 import com.yatsenko.core.bean.Message
+import com.yatsenko.core.bean.User
 import com.yatsenko.core.bean.response.CreateRoomResponse
 import com.yatsenko.core.bean.response.EnergizeResponse
 import com.yatsenko.core.bean.response.JoinRoomResponse
@@ -59,6 +60,10 @@ class CoreSDK(
         return socketComponent.sendMessageLiveData
     }
 
+    fun getChatUsers(): LiveData<EnergizeResponse<List<User>>> {
+        return socketComponent.chatUsersLiveData
+    }
+
     fun loadMessagesByChatId(chatId: String) {
         socketComponent.loadMessagesByChatId(chatId)
     }
@@ -77,5 +82,9 @@ class CoreSDK(
 
     fun joinToChat(roomId: String) {
         socketComponent.joinToChat(chatId = roomId)
+    }
+
+    fun getChatUsers(chatId: String) {
+        socketComponent.loadChatUsers(chatId)
     }
 }

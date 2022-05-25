@@ -1,20 +1,16 @@
 package com.yatsenko.core.components
 
-import com.google.gson.Gson
 import com.yatsenko.core.bean.Message
+import com.yatsenko.core.bean.User
 import com.yatsenko.core.bean.request.*
 import com.yatsenko.core.bean.response.*
 import com.yatsenko.core.utils.*
 import okhttp3.*
 import org.json.JSONObject
-import org.koin.core.KoinComponent
-import org.koin.core.inject
 import timber.log.Timber
 
 
-class SocketComponent : KoinComponent {
-
-    private val gson: Gson by inject()
+class SocketComponent : BaseSocketComponent() {
 
     private var webSocket: WebSocket? = null
 
@@ -30,11 +26,11 @@ class SocketComponent : KoinComponent {
 
     var sendMessageLiveData = SingleLiveEvent<EnergizeResponse<Message>>()
 
+    var chatUsersLiveData = SingleLiveEvent<EnergizeResponse<List<User>>>()
+
     var loadMessagesLiveData = SingleLiveEvent<EnergizeResponse<List<Message>>>()
 
     var createUSerLiveData = SingleLiveEvent<EnergizeResponse<String>>()
-
-    private var isFirstRequest = true
 
     private var isConnected = false
 
@@ -102,69 +98,66 @@ class SocketComponent : KoinComponent {
 
             when (jsonResponse.getString("event")) {
                 AUTH_LOGIN_RESPONSE -> {
-                    if (metaObject.isNotEmpty() && metaObject.getString("status") == "200") {
+                    if (isSuccessResponse(metaObject)) {
                         val data = gson.fromJson(dataResponse.getString("data"), LoginTokenResponse::class.java)
                         authLiveData.postValue(EnergizeResponse.Success(data))
                     } else {
-                        val meta = gson.fromJson(dataResponse.getString("meta"), Meta::class.java)
-                        authLiveData.postValue(EnergizeResponse.Error(meta))
+                        parseErrorResponse(authLiveData, dataResponse)
                     }
                 }
                 AUTH_LOGIN_BY_TOKEN_RESPONSE -> {
-                    if (metaObject.isNotEmpty() && metaObject.getString("status") == "200") {
-                        val data = gson.fromJson(dataResponse.getString("data"), LoginTokenResponse::class.java)
-                        authLiveData.postValue(EnergizeResponse.Success(data))
+                    if (isSuccessResponse(metaObject)) {
+                        parseSuccessResponse(authLiveData, dataResponse, LoginTokenResponse::class.java)
                     } else {
-                        val meta = gson.fromJson(dataResponse.getString("meta"), Meta::class.java)
-                        authLiveData.postValue(EnergizeResponse.Error(meta))
+                        parseErrorResponse(authLiveData, dataResponse)
                     }
                 }
                 AUTH_REGISTRATION_RESPONSE -> {
-                    if (metaObject.isNotEmpty() && metaObject.getString("status") == "200") {
+                    if (isSuccessResponse(metaObject)) {
                         createUSerLiveData.postValue(EnergizeResponse.Success(""))
                     } else {
-                        val meta = gson.fromJson(dataResponse.getString("meta"), Meta::class.java)
-                        createUSerLiveData.postValue(EnergizeResponse.Error(meta))
+                        parseErrorResponse(createUSerLiveData, dataResponse)
                     }
                 }
                 CHAT_CREATE_RESPONSE -> {
-                    if (metaObject.isNotEmpty() && metaObject.getString("status") == "200") {
-                        val data = gson.fromJson(dataResponse.getString("data"), CreateRoomResponse::class.java)
-                        createChatLiveData.postValue(EnergizeResponse.Success(data))
+                    if (isSuccessResponse(metaObject)) {
+                        parseSuccessResponse(createChatLiveData, dataResponse, CreateRoomResponse::class.java)
                     } else {
-                        val meta = gson.fromJson(dataResponse.getString("meta"), Meta::class.java)
-                        createChatLiveData.postValue(EnergizeResponse.Error(meta))
+                        parseErrorResponse(createChatLiveData, dataResponse)
                     }
                 }
                 CHAT_JOIN_RESPONSE -> {
-                    if (metaObject.isNotEmpty() && metaObject.getString("status") == "200") {
-                        val data = gson.fromJson(dataResponse.getString("data"), JoinRoomResponse::class.java)
-                        joinChatLiveData.postValue(EnergizeResponse.Success(data))
+                    if (isSuccessResponse(metaObject)) {
+                        parseSuccessResponse(joinChatLiveData, dataResponse, JoinRoomResponse::class.java)
                     } else {
-                        val meta = gson.fromJson(dataResponse.getString("meta"), Meta::class.java)
-                        joinChatLiveData.postValue(EnergizeResponse.Error(meta))
+                        parseErrorResponse(joinChatLiveData, dataResponse)
                     }
                 }
                 CHAT_GET_MESSAGES_RESPONSE -> {
-                    if (metaObject.isNotEmpty() && metaObject.getString("status") == "200") {
+                    if (isSuccessResponse(metaObject)) {
                         val data = gson.fromJson(dataResponse.getString("data"), ChatMessagesResponse::class.java)
                         loadMessagesLiveData.postValue(EnergizeResponse.Success(data.messages))
                     } else {
-                        val meta = gson.fromJson(dataResponse.getString("meta"), Meta::class.java)
-                        loadMessagesLiveData.postValue(EnergizeResponse.Error(meta))
+                        parseErrorResponse(loadMessagesLiveData, dataResponse)
                     }
                 }
+                CHAT_SEND_MESSAGE_SELF_RESPONSE,
                 CHAT_SEND_MESSAGE_RESPONSE -> {
-                    if (metaObject.isNotEmpty() && metaObject.getString("status") == "200") {
-                        val data = gson.fromJson(dataResponse.getString("data"), Message::class.java)
-                        sendMessageLiveData.postValue(EnergizeResponse.Success(data))
+                    if (isSuccessResponse(metaObject)) {
+                        val messageResponse =
+                            gson.fromJson(dataResponse.getString("data"), SendMessageResponse::class.java)
+                        sendMessageLiveData.postValue(EnergizeResponse.Success(messageResponse.message))
                     } else {
-                        val meta = gson.fromJson(dataResponse.getString("meta"), Meta::class.java)
-                        sendMessageLiveData.postValue(EnergizeResponse.Error(meta))
+                        parseErrorResponse(sendMessageLiveData, dataResponse)
                     }
                 }
                 CHAT_GET_USERS_RESPONSE -> {
-                    // todo implement in future
+                    if (isSuccessResponse(metaObject)) {
+                        val data = gson.fromJson(dataResponse.getString("data"), GetChatUserResponse::class.java)
+                        chatUsersLiveData.postValue(EnergizeResponse.Success(data.users))
+                    } else {
+                        parseErrorResponse(chatUsersLiveData, dataResponse)
+                    }
                 }
             }
         } catch (ex: Exception) {
@@ -266,7 +259,20 @@ class SocketComponent : KoinComponent {
             try {
                 webSocket?.send(JSONObject().apply {
                     put("event", CHAT_SEND_MESSAGE_REQUEST)
-                    put("data", SendMessageRequest(message, chatId).toJSONObject())
+                    put("data", SendMessageRequest(chatId, message).toJSONObject())
+                }.toString())
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
+        }
+    }
+
+    fun loadChatUsers(chatId: String) {
+        sendEvent {
+            try {
+                webSocket?.send(JSONObject().apply {
+                    put("event", CHAT_GET_USERS_REQUEST)
+                    put("data", GetChatUsersRequest(chatId).toJSONObject())
                 }.toString())
             } catch (ex: Exception) {
                 ex.printStackTrace()

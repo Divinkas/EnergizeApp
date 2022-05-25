@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.yatsenko.core.bean.Message
+import com.yatsenko.core.bean.User
 import com.yatsenko.core.bean.response.EnergizeResponse
 import com.yatsenko.core.utils.log
 import com.yatsenko.testhelper.base.BaseViewModel
@@ -17,6 +18,10 @@ class ChatViewModel : BaseViewModel() {
     private val _userChatsLiveData = MutableLiveData<List<String>>()
     val userChatsLiveData: LiveData<List<String>>
         get() = _userChatsLiveData
+
+    private val _roomUsersLiveData = MutableLiveData<List<User>>()
+    val roomUsersLiveData: LiveData<List<User>>
+        get() = _roomUsersLiveData
 
     private val _chatMessagesLiveData = MutableLiveData<List<Message>>()
     val chatMessagesLiveData: LiveData<List<Message>>
@@ -38,6 +43,21 @@ class ChatViewModel : BaseViewModel() {
                 }
                 is EnergizeResponse.Error -> {
                     authLiveData.postValue(AuthState.AuthError(response.meta.message))
+                }
+            }
+        }
+    }
+
+    fun observeChatUsers(viewLifecycleOwner: LifecycleOwner) {
+        viewModelScope.launch(Dispatchers.Main) {
+            coreSdk.getChatUsersLiveData().observe(viewLifecycleOwner) { chatUsersResponse ->
+                when (chatUsersResponse) {
+                    is EnergizeResponse.Success -> {
+                        _roomUsersLiveData.postValue(chatUsersResponse.data ?: listOf())
+                    }
+                    is EnergizeResponse.Error -> {
+                        log(chatUsersResponse.meta.message ?: "[observeChatCreateResponse] - error")
+                    }
                 }
             }
         }
@@ -137,6 +157,12 @@ class ChatViewModel : BaseViewModel() {
     fun connectAuthSocket() {
         viewModelScope.launch(Dispatchers.IO) {
             coreSdk.connectToAuthSocket(appSettings.getAuthToken())
+        }
+    }
+
+    fun getChatUsers(chatId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            coreSdk.getChatUsers(chatId)
         }
     }
 }
