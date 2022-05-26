@@ -53,12 +53,6 @@ class AuthViewModel : BaseViewModel() {
         }
     }
 
-    private fun loginByToken() {
-        viewModelScope.launch(Dispatchers.IO) {
-            // coreSdk.loginByToken(appSettings.authToken)
-        }
-    }
-
     fun isAuthorizedUser(): Boolean {
         return appSettings.getAuthToken().isNotEmpty()
     }

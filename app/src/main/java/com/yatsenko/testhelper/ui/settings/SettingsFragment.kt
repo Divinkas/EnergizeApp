@@ -30,7 +30,6 @@ class SettingsFragment : BaseFragment() {
     private fun setupListeners() {
         btnLogOut?.setOnClickListener {
             viewModel.logOut()
-            viewModel.closeSocketConnection()
             activity?.openLoginScreen()
         }
     }

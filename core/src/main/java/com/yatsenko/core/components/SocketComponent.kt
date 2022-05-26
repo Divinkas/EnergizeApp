@@ -32,59 +32,29 @@ class SocketComponent : BaseSocketComponent() {
 
     var createUSerLiveData = SingleLiveEvent<EnergizeResponse<String>>()
 
-    private var isConnected = false
-
     private var token: String = ""
 
-    fun connectToSocket(token: String, listener: WebSocketListener = getWebSocketListener()) {
-        if (!isConnected) {
-            try {
-                this.token = token
+    private val socketListener = SocketListener(
+        onConnectedAction = ::connectToSocket,
+        parseResponseAction = ::parseResponse
+    )
 
-                webSocket = client.newWebSocket(request, listener)
-
-                if (token.isNotEmpty()) {
-                    loginByToken(token)
-                }
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+    fun connectToSocket(token: String) {
+        this.token = token
+        if (!socketListener.isConnected) {
+            connectToSocket()
         }
     }
 
-    private fun getWebSocketListener(onConnectedAction: () -> Unit = {}): WebSocketListener {
-        return object : WebSocketListener() {
+    private fun connectToSocket() {
+        try {
+            webSocket = client.newWebSocket(request, socketListener)
 
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                super.onOpen(webSocket, response)
-                isConnected = true
-                onConnectedAction.invoke()
-                log("[webSocket] isConnected = true")
+            if (token.isNotEmpty()) {
+                loginByToken(token)
             }
-
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                super.onMessage(webSocket, text)
-                parseResponse(text)
-            }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                super.onFailure(webSocket, t, response)
-                t.printStackTrace()
-                log("[webSocket] isConnected = false ${response?.message}")
-                isConnected = false
-            }
-
-            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                super.onClosing(webSocket, code, reason)
-                log("[webSocket] isConnected = false $reason")
-                isConnected = false
-            }
-
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                super.onClosed(webSocket, code, reason)
-                log("[webSocket] onClosed / isConnected = false $reason")
-                isConnected = false
-            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 
@@ -107,6 +77,7 @@ class SocketComponent : BaseSocketComponent() {
                 }
                 AUTH_LOGIN_BY_TOKEN_RESPONSE -> {
                     if (isSuccessResponse(metaObject)) {
+                        socketListener.isConnected = true
                         parseSuccessResponse(authLiveData, dataResponse, LoginTokenResponse::class.java)
                     } else {
                         parseErrorResponse(authLiveData, dataResponse)
@@ -165,43 +136,29 @@ class SocketComponent : BaseSocketComponent() {
         }
     }
 
-    private fun sendEvent(action: () -> Unit = {}) {
-        if (!isConnected && token.isNotEmpty()) {
-            connectToSocket(token, getWebSocketListener {
-                action.invoke()
-            })
-        } else {
-            action.invoke()
-        }
-    }
-
     fun closeAuthSocket() {
-        webSocket?.close(1001, "Android: User exited.")
+        webSocket?.close(1001, "Android: Socket closed.")
     }
 
     fun createUser(login: String, mail: String, password: String) {
-        sendEvent {
-            try {
-                webSocket?.send(JSONObject().apply {
-                    put("event", AUTH_REGISTRATION_REQUEST)
-                    put("data", CreateUserRequest(login, mail, password, password).toJSONObject())
-                }.toString())
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+        try {
+            webSocket?.send(JSONObject().apply {
+                put("event", AUTH_REGISTRATION_REQUEST)
+                put("data", CreateUserRequest(login, mail, password, password).toJSONObject())
+            }.toString())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 
     fun loginByCredentials(login: String, password: String) {
-        sendEvent {
-            try {
-                webSocket?.send(JSONObject().apply {
-                    put("event", AUTH_LOGIN_REQUEST)
-                    put("data", LoginRequest(login, password).toJSONObject())
-                }.toString())
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+        try {
+            webSocket?.send(JSONObject().apply {
+                put("event", AUTH_LOGIN_REQUEST)
+                put("data", LoginRequest(login, password).toJSONObject())
+            }.toString())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 
@@ -217,66 +174,56 @@ class SocketComponent : BaseSocketComponent() {
     }
 
     fun createChat() {
-        sendEvent {
-            try {
-                webSocket?.send(JSONObject().apply {
-                    put("event", CHAT_CREATE_REQUEST)
-                }.toString())
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+        try {
+            webSocket?.send(JSONObject().apply {
+                put("event", CHAT_CREATE_REQUEST)
+            }.toString())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 
     fun joinToChat(chatId: String) {
-        sendEvent {
-            try {
-                webSocket?.send(JSONObject().apply {
-                    put("event", CHAT_JOIN_REQUEST)
-                    put("data", JoinRoomRequest(chatId).toJSONObject())
-                }.toString())
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+        try {
+            webSocket?.send(JSONObject().apply {
+                put("event", CHAT_JOIN_REQUEST)
+                put("data", JoinRoomRequest(chatId).toJSONObject())
+            }.toString())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 
     fun loadMessagesByChatId(chatId: String) {
-        sendEvent {
-            try {
-                webSocket?.send(JSONObject().apply {
-                    put("event", CHAT_GET_MESSAGES_REQUEST)
-                    put("data", ChatMessagesRequest(chatId).toJSONObject())
-                }.toString())
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+        try {
+            webSocket?.send(JSONObject().apply {
+                put("event", CHAT_GET_MESSAGES_REQUEST)
+                put("data", ChatMessagesRequest(chatId).toJSONObject())
+            }.toString())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 
     fun sendMessage(message: String, chatId: String) {
-        sendEvent {
-            try {
-                webSocket?.send(JSONObject().apply {
-                    put("event", CHAT_SEND_MESSAGE_REQUEST)
-                    put("data", SendMessageRequest(chatId, message).toJSONObject())
-                }.toString())
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+        try {
+            webSocket?.send(JSONObject().apply {
+                put("event", CHAT_SEND_MESSAGE_REQUEST)
+                put("data", SendMessageRequest(chatId, message).toJSONObject())
+            }.toString())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 
     fun loadChatUsers(chatId: String) {
-        sendEvent {
-            try {
-                webSocket?.send(JSONObject().apply {
-                    put("event", CHAT_GET_USERS_REQUEST)
-                    put("data", GetChatUsersRequest(chatId).toJSONObject())
-                }.toString())
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
+        try {
+            webSocket?.send(JSONObject().apply {
+                put("event", CHAT_GET_USERS_REQUEST)
+                put("data", GetChatUsersRequest(chatId).toJSONObject())
+            }.toString())
+        } catch (ex: Exception) {
+            ex.printStackTrace()
         }
     }
 }

@@ -7,8 +7,4 @@ class SettingsViewModel : BaseViewModel() {
     fun getUserName(): String {
         return appSettings.getUserData()?.name ?: ""
     }
-
-    fun closeSocketConnection() {
-        coreSdk.closeAuthSocketConnect()
-    }
 }

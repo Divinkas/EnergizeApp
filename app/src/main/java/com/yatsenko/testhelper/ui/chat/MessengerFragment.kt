@@ -65,9 +65,13 @@ class MessengerFragment : BaseFragment() {
     }
 
     private fun observeData() {
-        viewModel.chatMessagesLiveData.observe(viewLifecycleOwner) { messages ->
-            messagesAdapter?.addMessages(messages)
-            rvMessages?.scrollToPosition((messagesAdapter?.itemCount ?: 1) - 1)
+        viewModel.chatMessagesLiveData.observe(viewLifecycleOwner) { messageResponse ->
+            messageResponse
+                .filter { it.chatId == args.chatId }
+                .let { messages ->
+                    messagesAdapter?.addMessages(messages)
+                    rvMessages?.scrollToPosition((messagesAdapter?.itemCount ?: 1) - 1)
+                }
         }
 
         viewModel.roomUsersLiveData.observe(viewLifecycleOwner) { users ->

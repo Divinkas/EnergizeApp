@@ -9,7 +9,6 @@ import com.yatsenko.testhelper.base.BaseActivity
 import com.yatsenko.testhelper.ui.auth.AuthViewModel
 import com.yatsenko.testhelper.ui.auth.model.AuthState
 import com.yatsenko.testhelper.utils.openLoginScreen
-import com.yatsenko.testhelper.utils.openMainScreen
 import com.yatsenko.testhelper.utils.toast
 import kotlinx.android.synthetic.main.activity_registration.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -24,18 +23,6 @@ class RegistrationActivity : BaseActivity() {
 
         setupListeners()
         observeData()
-
-        viewModel.connectAuthSocket()
-
-        // setup mock data for test
-        // setupDefaultData()
-    }
-
-    private fun setupDefaultData() {
-        etRegLogin?.setText("andrew")
-        etRegMail?.setText("divinkas@gmail.com")
-        etRegPassword?.setText("qwerty")
-        etRegPassword2?.setText("qwerty")
     }
 
     private fun setupListeners() {
