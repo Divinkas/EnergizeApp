@@ -62,6 +62,12 @@ class MessengerFragment : BaseFragment() {
                 activity?.hideKeyboard()
             }
         }
+
+        etMessage?.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                etMessage?.postDelayed({ scrollToLastMessagePosition() }, 200)
+            }
+        }
     }
 
     private fun observeData() {
@@ -70,7 +76,7 @@ class MessengerFragment : BaseFragment() {
                 .filter { it.chatId == args.chatId }
                 .let { messages ->
                     messagesAdapter?.addMessages(messages)
-                    rvMessages?.scrollToPosition((messagesAdapter?.itemCount ?: 1) - 1)
+                    scrollToLastMessagePosition()
                 }
         }
 
@@ -84,6 +90,10 @@ class MessengerFragment : BaseFragment() {
                 is AuthState.AuthError -> activity?.openLoginScreen()
             }
         }
+    }
+
+    private fun scrollToLastMessagePosition() {
+        rvMessages?.scrollToPosition((messagesAdapter?.itemCount ?: 1) - 1)
     }
 
     private fun clearEnteredMessage() {
